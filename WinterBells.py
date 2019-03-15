@@ -65,26 +65,39 @@ def update_bell_pos():
 		screen.blit(get_image("bell.png"), bell)
 #checks if ball overlaps with bell
 #square hitboxes because i dont get paid
+#returns the position of the bell hit
 def hit_bell():
 	global bell_size
 	global char_size
 	global bells
 	global char_pos
-	hit = False
+	hit = None
 	
-	#for bell in bells:
-		
+	char_pos_end = list(map(lambda x, y: x + y, char_pos, char_size))
+	for bell in bells:
+		bell_end = list(map(lambda x, y: x + y, bell, bell_size))
+		if overlap((bell, bell_end), (char_pos, char_pos_end)):
+			hit = bell
+			break
 	
 	return hit
 
+def jump():
+	global char_vel_y
+	global char_vel_x
+	global char_vel
+	print("JUMP")
+	char_vel_y = 18
+	char_vel = (char_vel_x, char_vel_y)
 def overlap(a, b):
-	crossing = False
 	ylap = False
 	xlap = False
-	if (a[0][1] < b[1][1] and a[1][1] > b[1][1]) or (a[1][1] > b[0][1] and a[0][1] < b[0][1]:
+	if (a[0][1] < b[0][1] and a[1][1] > b[0][1]) or (a[0][1] > b[0][1] and a[0][1] < b[1][1]):
 		ylap = True
-	
-	return crossing
+	if (a[0][0] < b[0][0] and a[1][0] > b[0][0]) or (a[0][0] > b[0][0] and a[0][0] < b[1][0]):
+		xlap = True
+		
+	return ylap and xlap
 #determines movement of the character, updates the global position variable
 def char_move(pressed):
 	global char_vel_x
@@ -103,7 +116,7 @@ def char_move(pressed):
 		moved = True
 	if pressed[pygame.K_SPACE] and not touchable:
 		touchable = True
-		char_vel_y = 21
+		jump()
 	#friction
 	if not moved:
 		if char_vel_x < 0 :
@@ -140,8 +153,12 @@ while not done:
 		step = step + 1
 	else:
 		step = step - BELLSTEP
-		print("spawning...")
 		spawn_bell()
 	update_bell_pos()
+	bell = hit_bell()
+	if bell and touchable:
+		jump()
+		bells.remove(bell)
+	
 	pygame.display.flip()
 	clock.tick(TIMESTEP)
